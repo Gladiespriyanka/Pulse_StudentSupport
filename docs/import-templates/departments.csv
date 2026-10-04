@@ -1,0 +1,3 @@
+code,name,description,is_triage_desk
+hostel,Hostel & Facilities,Rooms mess and maintenance,false
+desk,Service Desk,Receives requests no rule could route,true

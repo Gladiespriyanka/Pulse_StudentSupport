@@ -1,0 +1,4 @@
+email,full_name,role,department_code,roll_no,programme,year,mentor_email,residence_location_code,employee_no,title
+asha.rao@your-college.edu,Asha Rao,student,,CS24001,B.Tech CSE,2,prof.nair@your-college.edu,hostel-b,,
+ravi.iyer@your-college.edu,Ravi Iyer,staff,hostel,,,,,,E1042,Warden
+prof.nair@your-college.edu,Prof Nair,mentor,academic,,,,,,E2001,Faculty mentor

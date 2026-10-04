@@ -1,0 +1,53 @@
+# PULSE Demo Mode - DEVELOPMENT / TESTING ONLY.
+#   docker compose -f docker-compose.demo.yml up -d --build      ->  http://localhost:8081
+# Completely separate from production: own project name, own database container, own volume, own secrets.
+# Seeds a fake campus with demo accounts (password: PulseDemo#2026). Never point this at real data.
+name: pulse-demo
+
+x-demo-env: &demo-env
+  APP_ENV: development
+  DEMO_MODE: "true"
+  SERVE_FRONTEND: "false"
+  DATABASE_URL: postgresql+psycopg://demo:demo-only-password@db:5432/pulse_demo
+  JWT_SECRET: demo-only-jwt-secret-not-for-production-0123456789
+  COOKIE_SECURE: "false"
+  RATE_LIMIT_ENABLED: "true"
+  DEMO_PASSWORD: PulseDemo#2026
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: demo, POSTGRES_PASSWORD: demo-only-password, POSTGRES_DB: pulse_demo }
+    volumes: [pgdata-demo:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U demo -d pulse_demo"], interval: 5s, timeout: 3s, retries: 20 }
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    environment: *demo-env
+    depends_on: { db: { condition: service_healthy } }
+    restart: "no"
+  seed:
+    build: ./backend
+    # idempotent: refuses (and exits cleanly) if the demo database already has users
+    command: ["sh", "-c", "python -m app.cli seed-dev || true"]
+    environment: *demo-env
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    restart: "no"
+  api:
+    build: ./backend
+    environment: *demo-env
+    depends_on: { seed: { condition: service_completed_successfully } }
+    expose: ["8000"]
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.cli", "worker"]
+    environment: *demo-env
+    depends_on: { seed: { condition: service_completed_successfully } }
+    healthcheck: { disable: true }
+  web:
+    build: ./frontend
+    depends_on: { api: { condition: service_healthy } }
+    ports: ["8081:80"]
+
+volumes:
+  pgdata-demo:

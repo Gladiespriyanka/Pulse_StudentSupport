@@ -1,0 +1,2 @@
+{ "name": "pulse-ui-smoke", "private": true, "type": "module", "scripts": { "test": "node run.mjs" },
+  "devDependencies": { "esbuild": "^0.28.0", "jsdom": "^30.0.0" } }

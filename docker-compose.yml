@@ -1,0 +1,86 @@
+# PULSE - production-style stack.   cp .env.example .env  &&  edit  &&  docker compose up -d --build
+# Services: db (PostgreSQL) -> migrate (one-shot, alembic) -> api + worker -> web (nginx: UI + /api proxy)
+# This file can NOT enable Demo Mode or serve seed data: those settings are hard-wired off below.
+name: pulse
+
+x-app-env: &app-env
+  APP_ENV: production
+  DEMO_MODE: "false"
+  SERVE_FRONTEND: "false"
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-pulse}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-pulse}
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (python -m app.cli gen-keys)}
+  FIELD_ENCRYPTION_KEYS: ${FIELD_ENCRYPTION_KEYS:?set FIELD_ENCRYPTION_KEYS in .env}
+  COOKIE_SECURE: ${COOKIE_SECURE:-true}
+  COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
+  CORS_ORIGINS: ${CORS_ORIGINS:-}
+  DOCS_ENABLED: ${DOCS_ENABLED:-true}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+  AGGREGATE_MIN_CELL: ${AGGREGATE_MIN_CELL:-5}
+  CAMPUS_TIMEZONE: ${CAMPUS_TIMEZONE:-Asia/Kolkata}
+  CRISIS_RESOURCES: "${CRISIS_RESOURCES:-Emergency: 112 | Tele-MANAS (24x7 mental health support): 14416}"
+  BREAK_GLASS_HOURS: ${BREAK_GLASS_HOURS:-48}
+  AUTO_CLOSE_RESOLVED_DAYS: ${AUTO_CLOSE_RESOLVED_DAYS:-7}
+  CASE_WINDOW_DAYS: ${CASE_WINDOW_DAYS:-21}
+  CASE_MIN_REQUESTS: ${CASE_MIN_REQUESTS:-3}
+  CASE_MIN_DEPARTMENTS: ${CASE_MIN_DEPARTMENTS:-3}
+  BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+  BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-pulse}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    # no published ports: the database is reachable only from this compose network
+
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    environment: *app-env
+    depends_on: { db: { condition: service_healthy } }
+    restart: "no"
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment: *app-env
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    expose: ["8000"]
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    command: ["python", "-m", "app.cli", "worker"]
+    environment: *app-env
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    healthcheck: { disable: true }
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on: { api: { condition: service_healthy } }
+    ports: ["${WEB_PORT:-8080}:80"]
+    read_only: true
+    tmpfs: [/var/cache/nginx, /var/run, /tmp]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  pgdata:

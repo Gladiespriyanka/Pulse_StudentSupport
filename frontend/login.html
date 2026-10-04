@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Sign in — PULSE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/login.css"></head><body>
+<div class="lg"><section class="l"><div class="logo"><svg class="ecg" viewBox="0 0 34 18" aria-hidden="true"><path d="M0 9h9l3-7 5 14 3-7h14"/></svg>PULSE</div>
+<h1>Problems rarely become crises overnight.</h1><p class="mu">PULSE helps campus teams respond early — Campus Support &amp; Early Intervention Network.</p>
+<ul><li>Tell us what is happening. We find the right people.</li><li>You decide who may see your support information.</li><li>Each role sees only what it needs.</li><li>Human check-ins, never diagnoses.</li></ul></section>
+<section class="r"><form id="f" novalidate><h2 style="font-size:26px">Sign in</h2><p class="mu" id="note">Use your campus account.</p>
+<label for="e">Campus email</label><input class="s" id="e" type="email" autocomplete="username" required>
+<label for="p">Password</label><input class="s" id="p" type="password" autocomplete="current-password" required>
+<p id="err" role="alert"></p><button class="b" style="width:100%" id="go">Sign in</button>
+<div id="demo" hidden><p class="mu" style="margin-top:18px">Demo Mode (development data only). Password <b id="dpw"></b> — tap an account to fill it in:</p><div class="ac" id="ac"></div></div></form></section></div>
+<script type="module" src="js/login.js"></script></body></html>

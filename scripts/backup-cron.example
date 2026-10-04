@@ -1,0 +1,3 @@
+# Nightly backup at 02:15, keep 14 days. Install with: crontab -e
+15 2 * * * cd /opt/pulse && KEEP_DAYS=14 ./scripts/backup.sh >> /var/log/pulse-backup.log 2>&1
+# Copy backups off the host (object storage / another machine) - a backup on the same disk is not a backup.

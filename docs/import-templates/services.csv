@@ -1,0 +1,3 @@
+code,name,department_code,description,category,default_priority,requires_approval,is_sensitive,is_emergency,student_visible
+hostel-maintenance,Hostel maintenance,hostel,Repairs and facilities,hostel,medium,false,false,false,true
+counselling,Counselling,wellbeing,Voluntary confidential support,wellbeing,medium,false,true,false,true
